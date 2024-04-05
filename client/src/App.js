@@ -102,9 +102,10 @@ function App() {
       return;
     }
 
-    if (!incomingSignal) {
-      console.error("Incoming signal is null, cannot add peer.");
-      return;
+    // Assuming incomingSignal should be an object with at least one key
+    if (!incomingSignal || Object.keys(incomingSignal).length === 0) {
+      console.error("Invalid or empty incomingSignal, cannot signal peer.");
+      return; // Exit the function if incomingSignal is not valid
     }
 
     const peer = new Peer({
@@ -135,7 +136,7 @@ function App() {
     <div className="App">
       <div className="video-container">
         <div className="video-wrapper">
-          <video playsInline autoPlay ref={userVideo} className="video" />
+          <video muted autoPlay ref={userVideo} className="video" />
           <div className="username-label">{username}</div>
         </div>
         {peers.map((peerObj, index) => (
