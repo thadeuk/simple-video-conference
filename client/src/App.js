@@ -22,12 +22,12 @@ function App() {
 
       socketRef.current.on("all users", users => {
         const peers = [];
-        console.log('Users', users);
         users.forEach(user => {
-          const peer = createPeer(user.id, socketRef.current.id, stream);
+          const peer = createPeer(user.id, socketRef.current.id, stream, user.username); // Pass username here
           peersRef.current.push({
             peerID: user.id,
             peer,
+            username: user.username, // Store username alongside peer
           });
           peers.push({ peer, username: user.username });
         });
@@ -35,13 +35,15 @@ function App() {
       });
 
       socketRef.current.on("user joined", payload => {
-        const peer = addPeer(payload.signal, payload.callerID, stream);
-        peersRef.current.push({
-          peerID: payload.callerID,
-          peer,
-        });
-
-        setPeers(users => [...users, { peer, username: payload.username }]);
+        const peer = addPeer(payload.signal, payload.callerID, stream, payload.username); // Pass username here
+        if (!peersRef.current.some(p => p.peerID === payload.callerID)) { // Check if peer already exists
+          peersRef.current.push({
+            peerID: payload.callerID,
+            peer,
+            username: payload.username, // Store username alongside peer
+          });
+          setPeers(users => [...users, { peer, username: payload.username }]);
+        }
       });
 
       socketRef.current.on("receiving returned signal", payload => {
@@ -82,7 +84,7 @@ function App() {
   }
 
   function createPeer(userToSignal, callerID, stream) {
-    console.log("Creating peer with ID:", userToSignal);
+    console.log("Creating peer with ID:", userToSignal, callerID, stream);
     const peer = new Peer({
       initiator: true,
       trickle: false,
@@ -97,16 +99,7 @@ function App() {
   }
 
   function addPeer(incomingSignal, callerID, stream) {
-    if (!stream) {
-      console.error("Stream is null, cannot add peer.");
-      return;
-    }
-
-    // Assuming incomingSignal should be an object with at least one key
-    if (!incomingSignal || Object.keys(incomingSignal).length === 0) {
-      console.error("Invalid or empty incomingSignal, cannot signal peer.");
-      return; // Exit the function if incomingSignal is not valid
-    }
+    console.log("Adding peer with ID:", incomingSignal, callerID, stream);
 
     const peer = new Peer({
       initiator: false,
@@ -122,10 +115,8 @@ function App() {
       }
     });
 
-    if (peer) {
+    if (incomingSignal) {
       peer.signal(incomingSignal);
-    } else {
-      console.error("Peer is null, cannot signal.");
     }
 
     return peer;
