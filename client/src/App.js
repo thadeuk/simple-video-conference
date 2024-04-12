@@ -21,6 +21,7 @@ function App() {
       socketRef.current.emit("join room", "someRoomId", username); // Pass username when joining room
 
       socketRef.current.on("all users", users => {
+        console.log("All users:", users);
         const peers = [];
         users.forEach(user => {
           const peer = createPeer(user.id, socketRef.current.id, stream, user.username); // Pass username here
@@ -35,6 +36,7 @@ function App() {
       });
 
       socketRef.current.on("user joined", payload => {
+        console.log("User joined:", payload.callerID, payload.username);
         const peer = addPeer(payload.signal, payload.callerID, stream, payload.username); // Pass username here
         if (!peersRef.current.some(p => p.peerID === payload.callerID)) { // Check if peer already exists
           peersRef.current.push({
@@ -47,6 +49,7 @@ function App() {
       });
 
       socketRef.current.on("receiving returned signal", payload => {
+        console.log("Receiving returned signal:", payload.id);
         const item = peersRef.current.find(p => p.peerID === payload.id);
         if (item) {
           item.peer.signal(payload.signal);
